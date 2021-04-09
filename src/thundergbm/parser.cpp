@@ -25,6 +25,8 @@ void Parser::parse_param(GBMParam &model_param, int argc, char **argv){
     model_param.num_class = 1;
     model_param.path = "../dataset/test_dataset.txt";
     model_param.tree_method = "auto";
+    model_param.from = 1;
+    model_param.to = 2;
     model_param.tree_per_rounds = 1; // # tree of each round, depends on # class
 
     if (argc < 2) {
@@ -71,6 +73,10 @@ void Parser::parse_param(GBMParam &model_param, int argc, char **argv){
                 model_param.gamma = atof(val);
             else if(str_name.compare("tree_method") == 0)
                 model_param.tree_method = val;
+            else if(str_name.compare("from") == 0)
+                model_param.from = atoi(val);
+            else if(str_name.compare("to") == 0)
+                model_param.to = atoi(val);
             else
                 LOG(INFO) << "\"" << name << "\" is unknown option!";
         }

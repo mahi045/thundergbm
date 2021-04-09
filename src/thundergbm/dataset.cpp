@@ -8,6 +8,7 @@
 #include "thundergbm/dataset.h"
 #include "thrust/scan.h"
 #include "thrust/execution_policy.h"
+#include <unordered_map>
 
 size_t DataSet::n_features() const {
     return n_features_;
@@ -159,10 +160,35 @@ std::ptrdiff_t ignore_comment_and_blank(char const* beg,
 }
 
 void DataSet::load_from_file(string file_name, GBMParam &param) {
+    LOG(INFO) << "loading cluster group from file ## " << "../dataset/cluster_group.txt " << " ##";
+    std::ifstream ifs_cluster("../dataset/cluster_group.txt", std::ifstream::binary);
+    CHECK(ifs_cluster.is_open()) << "file ## " << file_name << " ## not found. ";
+    std::unordered_map<float_type, int> cluster_map;
+    std::string line;
+    std::string airport_code;
+    float airport_code_float;
+    int zone_id;
+    while (std::getline(ifs_cluster, line))
+    {
+        std::stringstream s_stream(line);
+        getline(s_stream, airport_code, ':');
+        airport_code_float = stof(airport_code);
+        s_stream >> zone_id;
+        cluster_map[airport_code_float] = zone_id;
+    }
+    // std::cout << cluster_map.size() << std::endl;
+    // vector<vector<float_type>> count(10);
+    // for(const auto& n : cluster_map) {
+    //     count[n.second].push_back(n.first);
+    // }
+
+    // for (auto & element : count) {
+    //     std::cout << element.size() << std::endl;
+    // }
     LOG(INFO) << "loading LIBSVM dataset from file ## " << file_name << " ##";
     std::chrono::high_resolution_clock timer;
     auto t_start = timer.now();
-
+    LOG(INFO) << " Flight data between zone " << param.to << " and " << param.from;
     // initialize
     y.clear();
     csr_val.clear();
@@ -252,6 +278,24 @@ void DataSet::load_from_file(string file_name, GBMParam &param) {
                     if(r < 1) {
                         p = q;
                         continue;
+                    }
+                    if (feature_id == 2) {
+                        auto des_region = cluster_map.find(value);
+                        auto src_region = cluster_map.find(val_[tid].back());
+                        if (des_region == cluster_map.end() || src_region == cluster_map.end() ||
+                            (des_region->second != param.to && src_region->second != param.from) || 
+                            (des_region->second != param.from && src_region->second != param.to) ) {
+                            // for (int kk = 0; kk < row_len_[tid].back(); kk++) {
+                            //     col_idx[tid].pop_back();
+                            //     val_[tid].pop_back();
+                            // }
+                            col_idx[tid].pop_back();
+                            val_[tid].pop_back();
+                            y_[tid].pop_back();
+                            row_len_[tid].pop_back();
+                            p = line_end;
+                            continue;
+                        }
                     }
                     if(r == 2) {
                         col_idx[tid].push_back(feature_id - 1);

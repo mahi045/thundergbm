@@ -99,7 +99,8 @@ struct GBMParam {
     std::string objective;
     int num_class;
     int tree_per_rounds; // #tree of each round, depends on #class
-
+    int from;
+    int to;
     //for histogram
     int max_num_bin;
 
