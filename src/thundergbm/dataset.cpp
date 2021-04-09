@@ -9,6 +9,7 @@
 #include "thrust/scan.h"
 #include "thrust/execution_policy.h"
 #include <unordered_map>
+#include <ctime>
 
 size_t DataSet::n_features() const {
     return n_features_;
@@ -187,6 +188,8 @@ void DataSet::load_from_file(string file_name, GBMParam &param) {
     // }
     LOG(INFO) << "loading LIBSVM dataset from file ## " << file_name << " ##";
     std::chrono::high_resolution_clock timer;
+    struct std::tm start = {0,0,0,1,0,2015-1900}; /* January 1, 2015 */
+    std::time_t start_date = std::mktime(&start);
     auto t_start = timer.now();
     LOG(INFO) << " Flight data between zone " << param.to << " and " << param.from;
     // initialize
@@ -297,12 +300,39 @@ void DataSet::load_from_file(string file_name, GBMParam &param) {
                             continue;
                         }
                     }
+                    // Validation part
+                    // if (feature_id == 3) {
+                    //     assert(value >= 2015 && value <= 2021);
+                    // }
+                    // if (feature_id == 4) {
+                    //     assert(value >= 1 && value <= 12);
+                    // }
+                    // if (feature_id == 5) {
+                    //     assert(value >= 1 && value <= 31);
+                    // }
+                    // 
                     if(r == 2) {
-                        col_idx[tid].push_back(feature_id - 1);
-                        val_[tid].push_back(value);
-                        if(feature_id > max_feature[tid])
-                            max_feature[tid] = feature_id;
-                        row_len_[tid].back()++;
+                        if (feature_id == 5) {
+                            int month = val_[tid].back();
+                            val_[tid].pop_back();
+                            int year = val_[tid].back();
+                            val_[tid].pop_back();
+                            col_idx[tid].pop_back();
+                            row_len_[tid].back()--;
+                            struct std::tm current = {0,0,0,(int) value,month - 1,year - 1900}; /* this date */
+                            std::time_t current_date = std::mktime(&current);
+                            double difference = std::difftime(current_date, start_date) / (60 * 60 * 24);
+                            val_[tid].push_back(difference + 1);
+                        }
+                        else{
+                            if (feature_id > 5)
+                                feature_id -= 2; 
+                            col_idx[tid].push_back(feature_id - 1);
+                            val_[tid].push_back(value);
+                            if(feature_id > max_feature[tid])
+                                max_feature[tid] = feature_id;
+                            row_len_[tid].back()++;
+                        }
                     }
                     p = q;
                 } // end inner while
