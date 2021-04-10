@@ -399,7 +399,7 @@ void DataSet::load_from_file(string file_name, GBMParam &param) {
                 step_end = workload;
             }
             for (int ii = step_begin; ii < step_end; ii++) {
-                if (csr_col_idx[ii] == 11) {
+                if (csr_col_idx[ii] == 9) {
                     csr_val[ii] = (csr_val[ii] - min_dis) / interval;
                 }
             }
