@@ -327,6 +327,11 @@ void DataSet::load_from_file(string file_name, GBMParam &param) {
                         else{
                             if (feature_id > 5)
                                 feature_id -= 2; 
+                            if (feature_id == 6 || feature_id == 7) {
+                                // hhmm to minute conversion
+                                float minute = value - ((int) (value / 100.0)) * 100;
+                                value = ((int) (value / 100)) * 60 + minute;
+                            }
                             col_idx[tid].push_back(feature_id - 1);
                             val_[tid].push_back(value);
                             if(feature_id > max_feature[tid])
