@@ -211,7 +211,8 @@ void DataSet::load_from_file(string file_name, GBMParam &param) {
         while(ptr != begin && *ptr != '\n' && *ptr != '\r' && *ptr != '\0') --ptr;
         return ptr;
     };
-
+    float_type min_dis = 10000.0;
+    float_type max_dis = 0;
     // read and parse data
     while(ifs) {
         ifs.read(buffer, buffer_size);
@@ -224,6 +225,8 @@ void DataSet::load_from_file(string file_name, GBMParam &param) {
         vector<vector<int>> col_idx(nthread);
         vector<vector<int>> row_len_(nthread);
         vector<int> max_feature(nthread, 0);
+        vector<float_type> max_distance(nthread, 0);
+        vector<float_type> min_distance(nthread, 100000);
         bool is_zero_base = false;
 
 #pragma omp parallel num_threads(nthread)
@@ -337,6 +340,14 @@ void DataSet::load_from_file(string file_name, GBMParam &param) {
                             if(feature_id > max_feature[tid])
                                 max_feature[tid] = feature_id;
                             row_len_[tid].back()++;
+                            if (feature_id == 9) {
+                                if (value > max_distance[tid]) {
+                                    max_distance[tid] = value;                                            
+                                }
+                                if (value < min_distance[tid]) {
+                                    min_distance[tid] = value;                                            
+                                }
+                            }
                         }
                     }
                     p = q;
@@ -348,6 +359,16 @@ void DataSet::load_from_file(string file_name, GBMParam &param) {
             if (max_feature[i] > n_features_)
                 n_features_ = max_feature[i];
         }
+        for (int i = 1; i < nthread; i++) {
+            if (min_distance[i] < min_distance[0])
+                min_distance[0] = min_distance[i];
+            if (max_distance[i] > max_distance[0])
+                max_distance[0] = max_distance[i];
+        }
+        if (min_dis > min_distance[0]) 
+            min_dis = min_distance[0];
+        if (max_dis < max_distance[0]) 
+            max_dis = max_distance[0];
         for (int tid = 0; tid < nthread; tid++) {
             csr_val.insert(csr_val.end(), val_[tid].begin(), val_[tid].end());
             if(is_zero_base){
@@ -365,7 +386,24 @@ void DataSet::load_from_file(string file_name, GBMParam &param) {
             this->label.insert(label.end(), y_[i].begin(), y_[i].end());
         }
     } // end while
+    auto interval = max_dis - min_dis;
+    #pragma omp parallel num_threads(nthread)
+        {
+            int tid = omp_get_thread_num(); // thread id
+            size_t workload = csr_col_idx.size();
+            size_t nstep = (workload + nthread - 1) / nthread;
 
+            size_t step_begin = tid * nstep;
+            size_t step_end = (tid + 1) * nstep;
+            if (tid == nthread - 1) {
+                step_end = workload;
+            }
+            for (int ii = step_begin; ii < step_end; ii++) {
+                if (csr_col_idx[ii] == 11) {
+                    csr_val[ii] = (csr_val[ii] - min_dis) / interval;
+                }
+            }
+        }
     ifs.close();
     free(buffer);
     LOG(INFO) << "#instances = " << this->n_instances() << ", #features = " << this->n_features();
