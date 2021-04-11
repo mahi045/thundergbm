@@ -160,6 +160,29 @@ std::ptrdiff_t ignore_comment_and_blank(char const* beg,
     return length;
 }
 
+int get_month_index( string name )
+{
+    std::unordered_map<string, int> months;
+    months["January"] = 1;
+    months["February"] = 2;
+    months["March"] = 3;
+    months["April"] = 4;
+    months["May"] = 5;
+    months["June"] = 6;
+    months["July"] = 7;
+    months["August"] = 8;
+    months["September"] = 9;
+    months["October"] = 10;
+    months["November"] = 11;
+    months["December"] = 12;
+
+    const auto iter = months.find( name );
+    if( iter != months.end() )
+        return iter->second - 1;
+    std::cout << name << " Month not found";
+    return -1;
+}
+
 void DataSet::load_from_file(string file_name, GBMParam &param) {
     LOG(INFO) << "loading cluster group from file ## " << "../dataset/cluster_group.txt " << " ##";
     std::ifstream ifs_cluster("../dataset/cluster_group.txt", std::ifstream::binary);
@@ -186,10 +209,37 @@ void DataSet::load_from_file(string file_name, GBMParam &param) {
     // for (auto & element : count) {
     //     std::cout << element.size() << std::endl;
     // }
-    LOG(INFO) << "loading LIBSVM dataset from file ## " << file_name << " ##";
-    std::chrono::high_resolution_clock timer;
     struct std::tm start = {0,0,0,1,0,2015-1900}; /* January 1, 2015 */
     std::time_t start_date = std::mktime(&start);
+    LOG(INFO) << "loading holiday information from file ## " << "../dataset/holiday.csv " << " ##";
+    std::ifstream ifs_holiday("../dataset/holiday.csv", std::ifstream::binary);
+    CHECK(ifs_holiday.is_open()) << "file ## ../dataset/holiday.csv ## not found. ";
+    std::unordered_map<float_type, int> holiday;
+    std::string month, date, year;
+    std::getline(ifs_holiday, line);
+
+    while(std::getline(ifs_holiday, line))
+    {
+        // Extract the first line in the file
+        
+        line.erase(std::remove(line.begin(),line.end(),'\"'),line.end());
+        // Create a stringstream from line
+        std::stringstream full_string(line);
+
+        getline(full_string, month, ' ');
+        getline(full_string, date, ',');
+        getline(full_string, year, ' ');
+        getline(full_string, year, ' ');
+        struct std::tm current = {0,0,0,stoi(date), get_month_index(month), stoi(year) - 1900}; /* this date */
+        std::time_t current_date = std::mktime(&current);
+        double difference = std::difftime(current_date, start_date) / (60 * 60 * 24);
+        holiday[difference + 1] = 1;
+    }
+    
+
+    LOG(INFO) << "loading LIBSVM dataset from file ## " << file_name << " ##";
+    std::chrono::high_resolution_clock timer;
+    
     auto t_start = timer.now();
     LOG(INFO) << " Flight data between zone " << param.to << " and " << param.from;
     // initialize
@@ -326,6 +376,15 @@ void DataSet::load_from_file(string file_name, GBMParam &param) {
                             std::time_t current_date = std::mktime(&current);
                             double difference = std::difftime(current_date, start_date) / (60 * 60 * 24);
                             val_[tid].push_back(difference + 1);
+                            // for hoilday
+                            col_idx[tid].push_back(10);
+                            if (holiday.find(difference + 1) != holiday.end()) {
+                                val_[tid].push_back(1);
+                            }
+                            else {
+                                val_[tid].push_back(0);
+                            }
+                            max_feature[tid] = 11; // as holiday is 11'th column
                         }
                         else{
                             if (feature_id > 5)
