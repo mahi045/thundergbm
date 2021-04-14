@@ -36,6 +36,13 @@ int main(int argc, char **argv) {
     //predict
     Predictor pred;
     vector<float_type> y_pred_vec = pred.predict(model_param, boosted_model, dataSet);
-
+    // Writing predictions in submission file
+    std::ofstream myfile;
+    myfile.open ("submission.csv");
+    myfile << "Id,Predicted" << std::endl;
+    for (int ii = 0; ii < y_pred_vec.size(); ii++) {
+        myfile << ii << "," << y_pred_vec[ii] << std::endl;
+    }
+    myfile.close();
     //users can use y_pred_vec for their own purpose.
 }
