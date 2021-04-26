@@ -24,6 +24,7 @@ void Parser::parse_param(GBMParam &model_param, int argc, char **argv){
     model_param.objective = "reg:linear";
     model_param.num_class = 1;
     model_param.path = "../dataset/test_dataset.txt";
+    model_param.cluster_path = "../dataset/cluster_6_group.txt";
     model_param.tree_method = "auto";
     model_param.from = 1;
     model_param.to = 2;
@@ -51,6 +52,8 @@ void Parser::parse_param(GBMParam &model_param, int argc, char **argv){
                 model_param.profiling = atoi(val);
             else if(str_name.compare("data") == 0)
                 model_param.path = val;
+            else if(str_name.compare("cluster_path") == 0)
+                model_param.cluster_path = val;
             else if((str_name.compare("max_bin") == 0) || (str_name.compare("max_num_bin") == 0))
                 model_param.max_num_bin = atoi(val);
             else if((str_name.compare("colsample") == 0) || (str_name.compare("column_sampling_rate") == 0))
@@ -73,9 +76,9 @@ void Parser::parse_param(GBMParam &model_param, int argc, char **argv){
                 model_param.gamma = atof(val);
             else if(str_name.compare("tree_method") == 0)
                 model_param.tree_method = val;
-            else if(str_name.compare("from") == 0)
+            else if(str_name.compare("region1") == 0)
                 model_param.from = atoi(val);
-            else if(str_name.compare("to") == 0)
+            else if(str_name.compare("region2") == 0)
                 model_param.to = atoi(val);
             else
                 LOG(INFO) << "\"" << name << "\" is unknown option!";

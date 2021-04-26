@@ -160,8 +160,8 @@ std::ptrdiff_t ignore_comment_and_blank(char const* beg,
 }
 
 void DataSet::load_from_file(string file_name, GBMParam &param) {
-    LOG(INFO) << "loading cluster group from file ## " << "../dataset/cluster_group.txt " << " ##";
-    std::ifstream ifs_cluster("../dataset/cluster_group.txt", std::ifstream::binary);
+    LOG(INFO) << "loading cluster group from file ## " << param.cluster_path << " ##";
+    std::ifstream ifs_cluster(param.cluster_path, std::ifstream::binary);
     CHECK(ifs_cluster.is_open()) << "file ## " << file_name << " ## not found. ";
     std::unordered_map<float_type, int> cluster_map;
     std::string line;
