@@ -91,7 +91,7 @@ struct GBMParam {
     float_type rt_eps;
     float column_sampling_rate;
     std::string path;
-    std::string cluster_path;
+    std::string cluster_path;  // file for cluster information
     int verbose;
     bool profiling;
     bool bagging;
@@ -100,8 +100,8 @@ struct GBMParam {
     std::string objective;
     int num_class;
     int tree_per_rounds; // #tree of each round, depends on #class
-    int from;
-    int to;
+    int from;  // parameter for data partitioning
+    int to; // parameter for data partitioning
     //for histogram
     int max_num_bin;
 

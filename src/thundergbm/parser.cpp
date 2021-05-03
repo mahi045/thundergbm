@@ -53,7 +53,7 @@ void Parser::parse_param(GBMParam &model_param, int argc, char **argv){
             else if(str_name.compare("data") == 0)
                 model_param.path = val;
             else if(str_name.compare("cluster_path") == 0)
-                model_param.cluster_path = val;
+                model_param.cluster_path = val;  // file for cluster information
             else if((str_name.compare("max_bin") == 0) || (str_name.compare("max_num_bin") == 0))
                 model_param.max_num_bin = atoi(val);
             else if((str_name.compare("colsample") == 0) || (str_name.compare("column_sampling_rate") == 0))
@@ -77,9 +77,9 @@ void Parser::parse_param(GBMParam &model_param, int argc, char **argv){
             else if(str_name.compare("tree_method") == 0)
                 model_param.tree_method = val;
             else if(str_name.compare("region1") == 0)
-                model_param.from = atoi(val);
+                model_param.from = atoi(val);  // parameter for data partitioning
             else if(str_name.compare("region2") == 0)
-                model_param.to = atoi(val);
+                model_param.to = atoi(val); // parameter for data partitioning
             else
                 LOG(INFO) << "\"" << name << "\" is unknown option!";
         }

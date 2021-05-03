@@ -160,6 +160,7 @@ std::ptrdiff_t ignore_comment_and_blank(char const* beg,
 }
 
 void DataSet::load_from_file(string file_name, GBMParam &param) {
+    // Reading cluster information
     LOG(INFO) << "loading cluster group from file ## " << param.cluster_path << " ##";
     std::ifstream ifs_cluster(param.cluster_path, std::ifstream::binary);
     CHECK(ifs_cluster.is_open()) << "file ## " << file_name << " ## not found. ";
@@ -289,6 +290,7 @@ void DataSet::load_from_file(string file_name, GBMParam &param) {
                         continue;
                     }
                     if (feature_id == 2) {
+                        // data partitioning part
                         auto des_region = cluster_map.find(value);
                         auto src_region = cluster_map.find(val_[tid].back());
                         if (des_region == cluster_map.end() || src_region == cluster_map.end() ||
@@ -312,7 +314,7 @@ void DataSet::load_from_file(string file_name, GBMParam &param) {
                         if(feature_id > max_feature[tid])
                             max_feature[tid] = feature_id;
                         row_len_[tid].back()++;
-                        if (feature_id == distance_index) {    // 4 is index of distance
+                        if (feature_id == distance_index) {    // 4 is index of distance, doing normalization
                             if (value > max_distance[tid]) {
                                 max_distance[tid] = value;                                            
                             }
@@ -320,7 +322,7 @@ void DataSet::load_from_file(string file_name, GBMParam &param) {
                                 min_distance[tid] = value;                                            
                             }
                         }
-                        else if (feature_id == time_index) {    // 3 is index of distance
+                        else if (feature_id == time_index) {    // 3 is index of time, doing normalization
                             if (value > max_time[tid]) {
                                 max_time[tid] = value;                                            
                             }
@@ -338,6 +340,7 @@ void DataSet::load_from_file(string file_name, GBMParam &param) {
             if (max_feature[i] > n_features_)
                 n_features_ = max_feature[i];
         }
+        // doing normalization
         for (int i = 1; i < nthread; i++) {
             if (min_distance[i] < min_distance[0])
                 min_distance[0] = min_distance[i];
@@ -377,6 +380,7 @@ void DataSet::load_from_file(string file_name, GBMParam &param) {
     auto interval_time = max_elapsed_time - min_elapsed_time;
     #pragma omp parallel num_threads(nthread)
         {
+            // doing normalization
             int tid = omp_get_thread_num(); // thread id
             size_t workload = csr_col_idx.size();
             size_t nstep = (workload + nthread - 1) / nthread;
